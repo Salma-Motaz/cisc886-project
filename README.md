@@ -303,60 +303,291 @@ terraform destroy -auto-approve
 
 Fine-tuning is performed in two sequential Jupyter notebooks on **Lightning AI** (or any GPU-enabled environment with a T4 GPU or equivalent).
 
-### 7.1 Notebook 1 – Data Preparation (`notebook1_data_prep.ipynb`)
+### 7.1 # Notebook 1 — Data Preparation & Quality Scoring
 
-**Run this notebook first.** It performs the following operations:
+## Overview
+This notebook processes the raw Ubuntu dialogue corpus (provided as Parquet files) into cleaned, scored, and filtered CSV files ready for fine‑tuning a Llama 3.2 model. It:
 
-1. Reads the raw Parquet files from the preprocessed S3 output.
-2. Groups individual message rows into complete dialogue sequences.
-3. Scores each dialogue for quality using heuristic criteria.
-4. Filters the dataset to retain only high-quality samples.
-5. Serialises three CSV files to disk: `train_ready.csv`, `valid_ready.csv`, and `test_ready.csv`.
+1. Groups individual dialogue turns into full conversations
+2. Scores each dialogue for technical quality (Linux commands, resolution, length, etc.)
+3. Filters out low‑quality or off‑topic dialogues
+4. Saves three CSV files: `train_ready.csv`, `valid_ready.csv`, `test_ready.csv`
 
-### 7.2 Notebook 2 – Training and Evaluation (`notebook2_training_testing.ipynb`)
+These outputs are used by **Notebook 2 (Fine‑Tuning + HuggingFace Push)**.
 
-**Run this notebook second, using a fresh kernel** (Kernel → Restart before executing any cells).
+---
 
-**Prerequisites:**
+## Prerequisites
+- Python 3.10 or higher
+- Any machine with at least 8 GB RAM (16 GB recommended for full dataset)
+- The raw dataset: a ZIP archive containing **three folders** (`train/`, `validation/`, `test/`) – each folder contains multiple Parquet part files (e.g., `part-00000-….snappy.parquet`)
 
-* `train_ready.csv`, `valid_ready.csv`, and `test_ready.csv` must exist (produced by Notebook 1).
-* `HF_TOKEN` must be configured in Lightning AI Secrets (HuggingFace → Settings → Access Tokens → New token with Write permission).
-* The Meta Llama 3.2 licence must be accepted on HuggingFace.
+---
 
-**Pipeline steps:**
+## Step 1: Unzip and Prepare the Parquet Files
 
-1. Load prepared CSV files and convert to HuggingFace `Dataset` format for use with `SFTTrainer`.
-2. Load **Llama 3.2 3B Instruct** in 4-bit quantisation (QLoRA) via Unsloth.
-3. Attach LoRA adapters (rank = 16, alpha = 32) to attention and MLP projection layers.
-4. Evaluate the base (pre-training) model to establish a performance baseline using ROUGE-L, Relevance Rate, and a Classification Report.
-5. Fine-tune the model for **3 epochs** using QLoRA with the following hyperparameters:
+### 1.1 Unzip the dataset
+```bash
+unzip ubuntu_dialogue.zip   # adjust name to your actual zip file
+```
+This will create the folders: `train/`, `validation/`, `test/`.
 
-   * Learning rate: `1e-4` with cosine decay schedule
-   * Batch size: 2, gradient accumulation steps: 4 (effective batch size = 8)
-   * Optimiser: AdamW 8-bit
-   * Sequence packing enabled for training throughput
-6. Evaluate the fine-tuned model against the held-out test set using ROUGE-L, BERTScore, Accuracy, Precision, Recall, F1, and a full Classification Report.
-7. Display qualitative side-by-side comparisons of base model versus fine-tuned model responses.
-8. Save the LoRA adapter weights locally.
-9. Export the model to GGUF format (`q4_k_m` quantisation) for deployment via Ollama.
-10. Push the LoRA adapters and GGUF model to HuggingFace Hub.
+### 1.2 Concatenate part files into single Parquet files
+The notebook expects **single** Parquet files named `train.parquet`, `validation.parquet`, and `test.parquet` in the same directory as the notebook.
 
-> *Note: Training on 30,000 samples requires approximately 6 hours on a T4 GPU.
-
-**Checkpoint recovery:** If the kernel restarts during training, re-run all cells except Cell 6, replacing `trainer.train()` with:
-
+#### Using pandas (simple, works for moderate‑sized datasets)
 ```python
-trainer.train(resume_from_checkpoint=get_latest_checkpoint())
+import pandas as pd
+import glob
+
+# Train
+train_parts = glob.glob("train/*.parquet")
+train_df = pd.concat([pd.read_parquet(f) for f in train_parts], ignore_index=True)
+train_df.to_parquet("train.parquet")
+
+# Validation
+valid_parts = glob.glob("val/*.parquet")
+valid_df = pd.concat([pd.read_parquet(f) for f in valid_parts], ignore_index=True)
+valid_df.to_parquet("validation.parquet")
+
+# Test
+test_parts = glob.glob("test/*.parquet")
+test_df = pd.concat([pd.read_parquet(f) for f in test_parts], ignore_index=True)
+test_df.to_parquet("test.parquet")
+```
+After this step, you will have three files: `train.parquet`, `validation.parquet`, `test.parquet`.
+
+---
+
+## Step 2: Set Up the Python Environment
+
+### 2.1 Install Dependencies
+Run the first cell of the notebook, or manually install:
+```bash
+pip install fastparquet pandas numpy matplotlib
 ```
 
-**Output files produced:**
+---
 
-|File / Directory|Description|
-|-|-|
-|`checkpoints/checkpoint-11250/`|Intermediate LoRA adapter checkpoint|
-|`llama3b_ubuntu_lora/`|Final saved LoRA adapter weights|
-|`llama3b_ubuntu_gguf.gguf`|Quantised GGUF model for Ollama|
-|`evaluation_comparison.png`|Base vs. fine-tuned performance comparison plots|
+## Step 3: Run the Notebook
+
+Execute the cells in order. Each cell is clearly labelled.
+
+| Cell | Description | Approximate Time |
+|------|-------------|------------------|
+| 1‑2 | Install and imports | < 1 min |
+| 3 | Load raw Parquet files | 1‑2 min |
+| 4 | Group rows into full dialogues | 5‑10 min |
+| 5‑6 | Score and filter dialogues | 5‑10 min |
+| 7 | Visualise score distributions | < 1 min |
+| 8 | Check token length distribution | < 1 min |
+| 9 | Take random samples and save CSVs | < 1 min |
+| 10 | Verify saved files | < 1 min |
+
+### Important Parameters You Can Adjust
+- `QUALITY_THRESHOLD = 40` – minimum composite score (0‑100) to keep a dialogue. Increase for higher quality, decrease for more data.
+- `MAX_TRAIN = 30000`, `MAX_VALID = 3000`, `MAX_TEST = 500` – number of dialogues to randomly sample from the filtered set.
+- `MAX_TURNS = 5` – keep only the last `MAX_TURNS` of each dialogue (the resolution part is most valuable).
+
+---
+
+## Step 4: Output Files
+
+After successful execution, you will find:
+
+| File | Description | Typical Size |
+|------|-------------|--------------|
+| `train_ready.csv` | Training dialogues (Llama 3.2 chat format) | ~35 MB (30,000 dialogues) |
+| `valid_ready.csv` | Validation dialogues | ~2.8 MB (3,000 dialogues) |
+| `test_ready.csv` | Test dialogues | ~0.5 MB (500 dialogues) |
+| `dialogue_quality_scores.png` | Diagnostic plots (score distribution, length, etc.) | – |
+
+These CSV files are **directly consumable** by **Notebook 2** – no further preprocessing required.
+
+---
+
+## Next Steps
+
+After this notebook finishes, proceed to **Notebook 2** to fine‑tune Llama 3.2 3B Instruct on the prepared CSV files.
+
+### 7.2 Notebook 2 — Fine-Tuning + HuggingFace Push
+
+## Overview
+This notebook fine-tunes Llama 3.2 3B Instruct using QLoRA on an Ubuntu dialogue corpus, evaluates the model, and pushes the results to HuggingFace Hub.
+
+## Prerequisites
+
+### Hardware Requirements
+- **GPU**: Tesla T4 (15.6 GB VRAM) or equivalent with at least 16GB VRAM
+- **RAM**: 16GB minimum
+- **Storage**: 20GB free space
+
+### Software Requirements
+- Python 3.10 or higher
+- CUDA-capable GPU with drivers installed
+
+## Step 1: Environment Setup
+
+### 1.1 Create a Virtual Environment (Recommended)
+```bash
+python -m venv ubuntu-llm-env
+source ubuntu-llm-env/bin/activate  # On Windows: ubuntu-llm-env\Scripts\activate
+```
+
+### 1.2 Install Dependencies
+The notebook will automatically install Unsloth, but you can pre-install:
+```bash
+pip install -U "unsloth[colab-new]" torch transformers datasets trl rouge-score scikit-learn pandas matplotlib
+```
+
+### 1.3 Verify GPU Availability
+```python
+import torch
+print(f"CUDA available: {torch.cuda.is_available()}")
+print(f"GPU: {torch.cuda.get_device_name(0)}")
+```
+
+## Step 2: Prepare Data Files
+
+Ensure the following CSV files from **Notebook 1** are in the same directory as this notebook:
+- `train_ready.csv` (training data)
+- `valid_ready.csv` (validation data)
+- `test_ready.csv` (test data)
+
+Each CSV should contain a `full_text` column with formatted dialogue data.
+
+## Step 3: Run the Notebook
+
+### 3.1 Execute Cells in Order
+
+| Cell | Action | Estimated Time |
+|------|--------|----------------|
+| 1-2 | Install dependencies & imports | 1-2 minutes |
+| 3 | Load CSV → HF Dataset | < 1 minute |
+| 4 | Load Llama 3.2 + QLoRA | 2-3 minutes |
+| 5 | Baseline evaluation (100 samples) | ~11 minutes |
+| 6 | Train model (1000 steps) | ~60 minutes |
+| 7 | Plot training curve | < 1 minute |
+| 8 | Fine-tuned evaluation (100 samples) | ~1.5 minutes |
+| 9 | Save LoRA adapter locally | < 1 minute |
+| 10 | Export to GGUF (optional) | ~16 minutes |
+| 11 | Push to HuggingFace Hub (optional) | 5-10 minutes |
+
+### 3.2 Key Configuration Parameters
+
+The notebook uses these training parameters:
+```python
+MAX_SEQ_LENGTH = 2048
+LOAD_IN_4BIT = True
+r = 16 (LoRA rank)
+lora_alpha = 32
+max_steps = 1000
+learning_rate = 2e-4
+batch_size = 2
+gradient_accumulation_steps = 4
+```
+
+## Step 4: Using the Trained Model
+
+### 4.1 Generate Responses (Within Notebook)
+
+After training, use the `generate_response()` function:
+
+```python
+# Load fine-tuned model
+model, tokenizer = FastLanguageModel.from_pretrained(
+    model_name='checkpoints/checkpoint-800',
+    max_seq_length=2048,
+    load_in_4bit=True,
+)
+
+# Generate response
+response = generate_response("How do I check disk usage in Ubuntu?")
+print(response)
+```
+
+### 4.2 Load Saved LoRA Adapter
+
+```python
+from unsloth import FastLanguageModel
+
+model, tokenizer = FastLanguageModel.from_pretrained(
+    model_name='unsloth/Llama-3.2-3B-Instruct',
+    max_seq_length=2048,
+    load_in_4bit=True,
+)
+
+# Load your LoRA adapter
+model = FastLanguageModel.get_peft_model(
+    model,
+    r=16,
+    lora_alpha=32,
+    target_modules=['q_proj', 'k_proj', 'v_proj', 'o_proj', 'gate_proj', 'up_proj', 'down_proj'],
+)
+```
+
+### 4.3 Run with Ollama (GGUF Export)
+
+If you exported to GGUF:
+
+```bash
+# On EC2 or local machine with Ollama
+ollama create ubuntu-assistant -f Modelfile
+ollama run ubuntu-assistant
+```
+
+Or pull directly from HuggingFace:
+```bash
+ollama pull hf.co/Rodina222/ubuntu-dialogue-llama3b-gguf
+```
+
+## Step 5: Troubleshooting
+
+### Common Issues
+
+| Issue | Solution |
+|-------|----------|
+| Out of memory | Reduce `MAX_SEQ_LENGTH` to 1024 or `batch_size` to 1 |
+| Missing CSV files | Run Notebook 1 first to generate train_ready.csv, valid_ready.csv, test_ready.csv |
+| CUDA out of memory | Close other applications, clear cache with `torch.cuda.empty_cache()` |
+| Slow training | Ensure GPU is being used; check with `nvidia-smi` |
+| HuggingFace upload fails | Verify HF_TOKEN is correct and has write permissions |
+
+### Memory Optimization Tips
+- Enable `use_gradient_checkpointing = 'unsloth'` (already configured)
+- Use 4-bit quantization (already enabled)
+- Reduce batch size to 1 if needed
+
+## Step 6: Expected Outputs
+
+After running the notebook, you should have:
+
+| Output File | Description |
+|-------------|-------------|
+| `checkpoints/` | Training checkpoints (step 100, 200, ..., 1000) |
+| `llama3b_ubuntu_lora/` | LoRA adapter files (~115 MB) |
+| `training_curve.png` | Loss plot |
+| `llama3b_ubuntu_gguf_gguf/` | GGUF quantized model (~2 GB, optional) |
+
+## Step 7: Evaluation Metrics Reference
+
+Base model (before fine-tuning):
+- ROUGE-L F1: 0.061
+- Relevance Rate: 99.0%
+- Accuracy: 54.0%
+
+Fine-tuned model (step 800):
+- ROUGE-L F1: 0.197
+- Relevance Rate: 51.0%
+- Accuracy: 64.0%
+
+## Notes
+
+- **Start with a fresh kernel** (Kernel → Restart) before running to ensure clean RAM
+- The notebook uses `nrows=10000` for training and `nrows=2000` for validation to save time
+- For production use, increase these to full dataset sizes
+- The LoRA adapter is only 115 MB, making it easy to share and deploy
+- GGUF export is optional but recommended for Ollama deployment on EC2
 
 \---
 
