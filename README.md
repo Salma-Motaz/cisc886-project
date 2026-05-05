@@ -29,7 +29,7 @@ UbuntuAssist is a domain-specific conversational assistant fine-tuned on the Ubu
 ```
 repo/
 .
-├── Terraform\\\\\\\\\\\\\\\_files/
+├── Terraform_files/
 │   ├── foundation/
 │   │    ├── main.tf    # VPC, subnets, IGW, NAT Gateway, route tables, S3 VPC Endpoint
 │   │    └── iam.tf     # IAM roles and instance profiles for EMR and EC2
@@ -46,15 +46,15 @@ repo/
 │   │
 │   └──preprocessing/
 │        ├── bootstrap.sh             # EMR bootstrap script for Python dependency installation
-│        └── ubuntu\\\\\\\\\\\\\\\_preprocessing.py  # PySpark preprocessing script for the Ubuntu Dialogue Corpus
+│        └── ubuntu_preprocessing.py  # PySpark preprocessing script for the Ubuntu Dialogue Corpus
 │   
 ├── notebooks/
-│   ├── notebook1\\\\\\\\\\\\\\\_data\\\\\\\\\\\\\\\_prep.ipynb          # Lightning AI fine-tuning notebook (splitting the data)
-│   ├── notebook2\\\\\\\\\\\\\\\_training\\\\\\\\\\\\\\\_testing.ipynb   # Lightning AI fine-tuning notebook (Llama 3B, LoRA, GGUF export)
-│   └── convert\\\\\\\\\\\\\\\_to\\\\\\\\\\\\\\\_parquet.py
+│   ├── notebook1_data_prep.ipynb          # Lightning AI fine-tuning notebook (splitting the data)
+│   ├── notebook2_training_testing.ipynb   # Lightning AI fine-tuning notebook (Llama 3B, LoRA, GGUF export)
+│   └── convert_to_parquet.py
 │
 ├── dataset/
-│   └── convert\\\\\\\\\\\\\\\_to\\\\\\\\\\\\\\\_parquet.py
+│   └── convert_to_parquet.py
 │ 
 ├── output/
 │   │    └── figures/
@@ -91,7 +91,7 @@ repo/
 
 ### 3.3 External Accounts and Licences
 
-* A **HuggingFace** account with a write-permission access token (stored in Lightning AI Secrets as `HF\\\\\\\\\\\\\\\_TOKEN`).
+* A **HuggingFace** account with a write-permission access token (stored in Lightning AI Secrets as `HF_TOKEN`).
 * Acceptance of the **Meta Llama 3.2 licence** at: [huggingface.co/meta-llama/Llama-3.2-3B-Instruct](https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct).
 * Access to the **Ubuntu Dialogue Corpus** dataset: [https://dataset.cs.mcgill.ca/ubuntu-corpus-1.0/](https://dataset.cs.mcgill.ca/ubuntu-corpus-1.0/).
 
@@ -110,17 +110,17 @@ Internet
 ┌─────────────────────────────────────────────────────────────┐
 │  VPC — 10.0.0.0/16                                          │
 │                                                             │
-│  ┌─ Public Subnet (10.0.1.0/24, us-east-1a) ─────────┐    │
+│  ┌─ Public Subnet (10.0.1.0/24, us-east-1a) ───────────┐    │
 │  │  Internet Gateway (25nplx-igw)                      │    │
-│  │  NAT Gateway (Elastic IP, outbound only)             │    │
+│  │  NAT Gateway (Elastic IP, outbound only)            │    │
 │  │  Bastion Host (t3.micro, Ubuntu 22.04, port 22)     │    │
 │  └─────────────────────────────────────────────────────┘    │
-│           │ SSH tunnel                                       │
-│  ┌─ Private Subnet (10.0.2.0/24, us-east-1a) ────────┐    │
-│  │  LLM Server (t3.2xlarge, no public IP)             │    │
+│           │ SSH tunnel                                      │
+│  ┌─ Private Subnet (10.0.2.0/24, us-east-1a) ──────────┐    │
+│  │  LLM Server (t3.2xlarge, no public IP)              │    │
 │  │    Ollama  → port 11434                             │    │
-│  │    OpenWebUI (Docker) → port 8080                  │    │
-│  │  EMR Cluster (m5.xlarge × 3, auto-terminates)      │    │
+│  │    OpenWebUI (Docker) → port 8080                   │    │
+│  │  EMR Cluster (m5.xlarge × 3, auto-terminates)       │    │
 │  └─────────────────────────────────────────────────────┘    │
 │  S3 VPC Endpoint (free, no NAT charges)                     │
 │  IAM Roles (EMR service, EMR EC2, EC2 deployment)           │
@@ -155,15 +155,15 @@ Internet
 Execute the following commands in an elevated PowerShell session:
 
 ```powershell
-Set-ExecutionPolicy Bypass -Scope Process -Force
-\\\\\\\\\\\\\\\[System.Net.ServicePointManager]::SecurityProtocol = `
-    \\\\\\\\\\\\\\\[System.Net.ServicePointManager]::SecurityProtocol -bor 3072
-iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+- Set-ExecutionPolicy Bypass -Scope Process -Force
+- [System.Net.ServicePointManager]::SecurityProtocol = `
+  [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+- iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 choco install terraform -y
 terraform -version
 ```
 
-Expected output: `Terraform v1.14.8 on windows\\\\\\\\\\\\\\\_amd64`
+Expected output: `Terraform v1.14.8 on windows_amd64`
 
 ### 5.2 Install and Configure the AWS CLI
 
@@ -194,10 +194,10 @@ aws sts get-caller-identity
 
 ### 5.3 Generate the SSH Key Pair
 
-Navigate to the `Terraform\\\\\\\\\\\\\\\_files/utilities/` directory and generate a 4096-bit RSA key pair. When prompted for a passphrase, press **Enter** twice to proceed without one.
+Navigate to the `Terraform_files/utilities/` directory and generate a 4096-bit RSA key pair. When prompted for a passphrase, press **Enter** twice to proceed without one.
 
 ```powershell
-ssh-keygen -t rsa -b 4096 -f ".\\\\\\\\\\\\\\\\Terraform\\\\\\\\\\\\\\\_files\\\\\\\\\\\\\\\\utilities\\\\\\\\\\\\\\\\25nplx-keypair"
+ssh-keygen -t rsa -b 4096 -f "Terraform_files\utilities\25nplx-keypair"
 ```
 
 Import the public key into AWS:
@@ -213,7 +213,7 @@ aws ec2 import-key-pair `
 Navigate to the `foundation/` directory and execute the Terraform workflow:
 
 ```bash
-cd Terraform\\\\\\\\\\\\\\\_files/foundation
+cd Terraform_files/foundation
 terraform init
 terraform validate
 terraform plan
@@ -224,11 +224,11 @@ terraform apply -auto-approve
 
 |Output Variable|Example Value|
 |-|-|
-|`availability\\\\\\\\\\\\\\\_zone`|us-east-1a|
-|`ec2\\\\\\\\\\\\\\\_deployment\\\\\\\\\\\\\\\_profile\\\\\\\\\\\\\\\_name`|25nplx-ec2-deployment-profile|
-|`private\\\\\\\\\\\\\\\_subnet\\\\\\\\\\\\\\\_id`|subnet-099bb09528fbee1b8|
-|`public\\\\\\\\\\\\\\\_subnet\\\\\\\\\\\\\\\_id`|subnet-06ab8b608fd0becd0|
-|`vpc\\\\\\\\\\\\\\\_id`|vpc-0962a0563e0d101bb|
+|`availability_zone`|us-east-1a|
+|`ec2_deployment_profile_name`|25nplx-ec2-deployment-profile|
+|`private_subnet_id`|subnet-099bb09528fbee1b8|
+|`public_subnet_id`|subnet-06ab8b608fd0becd0|
+|`vpc_id`|vpc-0962a0563e0d101bb|
 
 \---
 
@@ -248,31 +248,31 @@ aws s3 ls  # Verify bucket creation
 
 ```bash
 cd downloads
-python convert\\\\\\\\\\\\\\\_to\\\\\\\\\\\\\\\_parquet.py
+python convert_to_parquet.py
 ```
 
-The script processes approximately 16.5 million rows (\~140 minutes to complete) and saves the output as `ubuntu\\\\\\\\\\\\\\\_raw.parquet` (\~735 MB).
+The script processes approximately 16.5 million rows (\~140 minutes to complete) and saves the output as `ubuntu_raw.parquet` (\~735 MB).
 
 ### 6.3 Upload Assets to S3
 
 Upload the converted dataset:
 
 ```bash
-aws s3 cp ubuntu\\\\\\\\\\\\\\\_raw.parquet s3://25nplx-cisc886-bucket/ubuntu\\\\\\\\\\\\\\\_raw.parquet
+aws s3 cp ubuntu_raw.parquet s3://25nplx-cisc886-bucket/ubuntu_raw.parquet
 ```
 
 Upload the PySpark preprocessing script and EMR bootstrap file:
 
 ```bash
 aws s3 cp bootstrap.sh s3://25nplx-cisc886-bucket/scripts/bootstrap.sh
-aws s3 cp ubuntu\\\\\\\\\\\\\\\_preprocessing.py s3://25nplx-cisc886-bucket/scripts/ubuntu\\\\\\\\\\\\\\\_preprocessing.py
+aws s3 cp ubuntu_preprocessing.py s3://25nplx-cisc886-bucket/scripts/ubuntu_preprocessing.py
 ```
 
 Copy the generated key pair into the `emr/` directory:
 
 ```bash
-cp Terraform\\\\\\\\\\\\\\\_files/utilities/25nplx-keypair     Terraform\\\\\\\\\\\\\\\_files/emr/
-cp Terraform\\\\\\\\\\\\\\\_files/utilities/25nplx-keypair.pub Terraform\\\\\\\\\\\\\\\_files/emr/
+cp Terraform_files/utilities/25nplx-keypair     Terraform_files/emr/
+cp Terraform_files/utilities/25nplx-keypair.pub Terraform_files/emr/
 ```
 
 ### 6.4 Provision and Run the EMR Cluster
@@ -280,7 +280,7 @@ cp Terraform\\\\\\\\\\\\\\\_files/utilities/25nplx-keypair.pub Terraform\\\\\\\\
 Navigate to the `emr/` directory and execute the Terraform workflow:
 
 ```bash
-cd Terraform\\\\\\\\\\\\\\\_files/emr
+cd Terraform_files/emr
 terraform init
 terraform validate
 terraform plan
@@ -303,7 +303,7 @@ terraform destroy -auto-approve
 
 Fine-tuning is performed in two sequential Jupyter notebooks on **Lightning AI** (or any GPU-enabled environment with a T4 GPU or equivalent).
 
-### 7.1 Notebook 1 – Data Preparation (`notebook1\\\\\\\\\\\\\\\_data\\\\\\\\\\\\\\\_prep.ipynb`)
+### 7.1 Notebook 1 – Data Preparation (`notebook1_data_prep.ipynb`)
 
 **Run this notebook first.** It performs the following operations:
 
@@ -311,16 +311,16 @@ Fine-tuning is performed in two sequential Jupyter notebooks on **Lightning AI**
 2. Groups individual message rows into complete dialogue sequences.
 3. Scores each dialogue for quality using heuristic criteria.
 4. Filters the dataset to retain only high-quality samples.
-5. Serialises three CSV files to disk: `train\\\\\\\\\\\\\\\_ready.csv`, `valid\\\\\\\\\\\\\\\_ready.csv`, and `test\\\\\\\\\\\\\\\_ready.csv`.
+5. Serialises three CSV files to disk: `train_ready.csv`, `valid_ready.csv`, and `test_ready.csv`.
 
-### 7.2 Notebook 2 – Training and Evaluation (`notebook2\\\\\\\\\\\\\\\_training\\\\\\\\\\\\\\\_testing.ipynb`)
+### 7.2 Notebook 2 – Training and Evaluation (`notebook2_training_testing.ipynb`)
 
 **Run this notebook second, using a fresh kernel** (Kernel → Restart before executing any cells).
 
 **Prerequisites:**
 
-* `train\\\\\\\\\\\\\\\_ready.csv`, `valid\\\\\\\\\\\\\\\_ready.csv`, and `test\\\\\\\\\\\\\\\_ready.csv` must exist (produced by Notebook 1).
-* `HF\\\\\\\\\\\\\\\_TOKEN` must be configured in Lightning AI Secrets (HuggingFace → Settings → Access Tokens → New token with Write permission).
+* `train_ready.csv`, `valid_ready.csv`, and `test_ready.csv` must exist (produced by Notebook 1).
+* `HF_TOKEN` must be configured in Lightning AI Secrets (HuggingFace → Settings → Access Tokens → New token with Write permission).
 * The Meta Llama 3.2 licence must be accepted on HuggingFace.
 
 **Pipeline steps:**
@@ -338,15 +338,15 @@ Fine-tuning is performed in two sequential Jupyter notebooks on **Lightning AI**
 6. Evaluate the fine-tuned model against the held-out test set using ROUGE-L, BERTScore, Accuracy, Precision, Recall, F1, and a full Classification Report.
 7. Display qualitative side-by-side comparisons of base model versus fine-tuned model responses.
 8. Save the LoRA adapter weights locally.
-9. Export the model to GGUF format (`q4\\\\\\\\\\\\\\\_k\\\\\\\\\\\\\\\_m` quantisation) for deployment via Ollama.
+9. Export the model to GGUF format (`q4_k_m` quantisation) for deployment via Ollama.
 10. Push the LoRA adapters and GGUF model to HuggingFace Hub.
 
-> \\\\\\\\\\\\\\\*\\\\\\\\\\\\\\\*Note:\\\\\\\\\\\\\\\*\\\\\\\\\\\\\\\* Training on 30,000 samples requires approximately \\\\\\\\\\\\\\\*\\\\\\\\\\\\\\\*6 hours\\\\\\\\\\\\\\\*\\\\\\\\\\\\\\\* on a T4 GPU.
+> *Note: Training on 30,000 samples requires approximately 6 hours on a T4 GPU.
 
 **Checkpoint recovery:** If the kernel restarts during training, re-run all cells except Cell 6, replacing `trainer.train()` with:
 
 ```python
-trainer.train(resume\\\\\\\\\\\\\\\_from\\\\\\\\\\\\\\\_checkpoint=get\\\\\\\\\\\\\\\_latest\\\\\\\\\\\\\\\_checkpoint())
+trainer.train(resume_from_checkpoint=get_latest_checkpoint())
 ```
 
 **Output files produced:**
@@ -354,9 +354,9 @@ trainer.train(resume\\\\\\\\\\\\\\\_from\\\\\\\\\\\\\\\_checkpoint=get\\\\\\\\\\
 |File / Directory|Description|
 |-|-|
 |`checkpoints/checkpoint-11250/`|Intermediate LoRA adapter checkpoint|
-|`llama3b\\\\\\\\\\\\\\\_ubuntu\\\\\\\\\\\\\\\_lora/`|Final saved LoRA adapter weights|
-|`llama3b\\\\\\\\\\\\\\\_ubuntu\\\\\\\\\\\\\\\_gguf/\\\\\\\\\\\\\\\*.gguf`|Quantised GGUF model for Ollama|
-|`evaluation\\\\\\\\\\\\\\\_comparison.png`|Base vs. fine-tuned performance comparison plots|
+|`llama3b_ubuntu_lora/`|Final saved LoRA adapter weights|
+|`llama3b_ubuntu_gguf.gguf`|Quantised GGUF model for Ollama|
+|`evaluation_comparison.png`|Base vs. fine-tuned performance comparison plots|
 
 \---
 
@@ -367,7 +367,7 @@ trainer.train(resume\\\\\\\\\\\\\\\_from\\\\\\\\\\\\\\\_checkpoint=get\\\\\\\\\\
 Navigate to the `deployment/` directory and execute the Terraform workflow:
 
 ```bash
-cd Terraform\\\\\\\\\\\\\\\_files/deployment
+cd Terraform_files/deployment
 terraform init
 terraform validate
 terraform plan
@@ -378,8 +378,8 @@ terraform apply -auto-approve
 
 |Output Variable|Example Value|
 |-|-|
-|`bastion\\\\\\\\\\\\\\\_public\\\\\\\\\\\\\\\_ip`|34.205.87.101|
-|`ec2\\\\\\\\\\\\\\\_private\\\\\\\\\\\\\\\_ip`|10.0.2.163|
+|`bastion_public_ip`|34.205.87.101|
+|`ec2_private_ip`|10.0.2.163|
 
 ### 8.2 Configure the SSH Private Key
 
@@ -387,12 +387,12 @@ Rename the private key file to the `.pem` extension and restrict its permissions
 
 ```powershell
 # Store the key path
-$keyPath = ".\\\\\\\\\\\\\\\\Terraform\\\\\\\\\\\\\\\_files\\\\\\\\\\\\\\\\utilities\\\\\\\\\\\\\\\\25nplx-keypair.pem"
+$keyPath = "....\Terraform_files\utilities\25nplx-keypair.pem"
 
 # Remove inherited permissions and grant read-only access to the current user
 icacls $keyPath /inheritance:r
 icacls $keyPath /grant:r "$($env:USERNAME):(R)"
-icacls $keyPath /remove "NT AUTHORITY\\\\\\\\\\\\\\\\Authenticated Users"
+icacls $keyPath /remove "NT AUTHORITY\Authenticated Users"
 icacls $keyPath /remove "Everyone"
 ```
 
@@ -401,22 +401,20 @@ icacls $keyPath /remove "Everyone"
 **SSH into the bastion host:**
 
 ```bash
-ssh -i ".\\\\\\\\\\\\\\\\Terraform\\\\\\\\\\\\\\\_files\\\\\\\\\\\\\\\\utilities\\\\\\\\\\\\\\\\25nplx-keypair.pem" ubuntu@<bastion\\\\\\\\\\\\\\\_public\\\\\\\\\\\\\\\_ip>
+ssh -i "...\Terraform_files\utilities\25nplx-keypair.pem" ubuntu@<bastion_public_ip>
 ```
 
 **Transfer the private key to the bastion host:**
 
 ```bash
-scp -i ".\\\\\\\\\\\\\\\\Terraform\\\\\\\\\\\\\\\_files\\\\\\\\\\\\\\\\utilities\\\\\\\\\\\\\\\\25nplx-keypair.pem" \\\\\\\\\\\\\\\\
-    ".\\\\\\\\\\\\\\\\Terraform\\\\\\\\\\\\\\\_files\\\\\\\\\\\\\\\\utilities\\\\\\\\\\\\\\\\25nplx-keypair.pem" \\\\\\\\\\\\\\\\
-    ubuntu@<bastion\\\\\\\\\\\\\\\_public\\\\\\\\\\\\\\\_ip>:\\\\\\\\\\\\\\\~/.ssh/25nplx-keypair.pem
+ssscp -i "...\Terraform_files\utilities\25nplx-keypair.pem" "....\Terraform_files\utilities\25nplx-keypair.pem" ubuntu@ bastion_public_ip:~/.ssh/25nplx-keypair.pem
 ```
 
 **Set correct permissions on the bastion host, then SSH into the private EC2 instance:**
 
 ```bash
-chmod 400 \\\\\\\\\\\\\\\~/.ssh/25nplx-keypair.pem
-ssh -i \\\\\\\\\\\\\\\~/.ssh/25nplx-keypair.pem ubuntu@<ec2\\\\\\\\\\\\\\\_private\\\\\\\\\\\\\\\_ip>
+chmod 400 ~/.ssh/25nplx-keypair.pem
+ssh -i ~/.ssh/25nplx-keypair.pem ubuntu@ec2_private_ip
 ```
 
 ### 8.4 Verify the Deployment on the Private EC2 Instance
@@ -459,9 +457,7 @@ docker ps
 In a **new local terminal**, create an SSH tunnel to forward the Open WebUI port:
 
 ```bash
-ssh -i ".\\\\\\\\\\\\\\\\Terraform\\\\\\\\\\\\\\\_files\\\\\\\\\\\\\\\\utilities\\\\\\\\\\\\\\\\25nplx-keypair.pem" \\\\\\\\\\\\\\\\
-    -L 8080:<ec2\\\\\\\\\\\\\\\_private\\\\\\\\\\\\\\\_ip>:8080 \\\\\\\\\\\\\\\\
-    ubuntu@<bastion\\\\\\\\\\\\\\\_public\\\\\\\\\\\\\\\_ip> -N
+ssh -i "...\Terraform_files\utilities\ 25nplx-keypair.pem" -L 8080: ec2_private_ip:8080 ubuntu@bastion_public_ip -N
 ```
 
 Open a browser and navigate to:
@@ -484,21 +480,21 @@ Press `Ctrl+C` in the tunnel terminal, then type `exit` in each SSH session unti
 **Step 2 – Destroy the deployment infrastructure:**
 
 ```bash
-cd Terraform\\\\\\\\\\\\\\\_files/deployment
+cd Terraform_files/deployment
 terraform destroy -auto-approve
 ```
 
 **Step 3 – Destroy the EMR security groups (if not already destroyed):**
 
 ```bash
-cd Terraform\\\\\\\\\\\\\\\_files/emr
+cd Terraform_files/emr
 terraform destroy -auto-approve
 ```
 
 **Step 4 – Destroy the foundation infrastructure:**
 
 ```bash
-cd Terraform\\\\\\\\\\\\\\\_files/foundation
+cd Terraform_files/foundation
 terraform destroy -auto-approve
 ```
 
@@ -543,17 +539,17 @@ aws sts get-caller-identity
 ### 11.3 Generate SSH Key Pair and Import to AWS
 
 ```bash
-ssh-keygen -t rsa -b 4096 -f ".\\\\Terraform\\\_files\\\\utilities\\\\25nplx-keypair"
+ssh-keygen -t rsa -b 4096 -f "your_teraform_\Terraform_files\25nplx-keypair".
 
-aws ec2 import-key-pair \\\\
-  --key-name "25nplx-keypair" \\\\
-  --public-key-material fileb://Terraform\\\_files/utilities/25nplx-keypair.pub
+aws ec2 import-key-pair 
+  --key-name "25nplx-keypair" 
+  --public-key-material fileb:Terraform_files/utilities/25nplx-keypair.pub
 ```
 
 ### 11.4 Deploy Foundation Infrastructure (Terraform)
 
 ```bash
-cd Terraform\\\_files/foundation
+cd Terraform_files/foundation
 terraform init
 terraform validate
 terraform plan
@@ -563,7 +559,7 @@ terraform apply -auto-approve
 ### 11.5 Deploy Model Serving Infrastructure
 
 ```bash
-cd Terraform\\\_files/deployment
+cd Terraform_files/deployment
 terraform init
 terraform validate
 terraform plan
@@ -574,8 +570,8 @@ terraform apply -auto-approve
 
 |Output Variable|Example Value|
 |-|-|
-|`bastion\\\\\\\\\\\\\\\_public\\\\\\\\\\\\\\\_ip`|34.205.87.101|
-|`ec2\\\\\\\\\\\\\\\_private\\\\\\\\\\\\\\\_ip`|10.0.2.163|
+|`bastion_public_ip`|34.205.87.101|
+|`ec2_private_ip`|10.0.2.163|
 
 ### 11.6 Configure the SSH Private Key
 
@@ -583,13 +579,14 @@ Rename the private key file to the `.pem` extension and restrict its permissions
 
 ```powershell
 # Store the key path
-$keyPath = ".\\\\\\\\\\\\\\\\Terraform\\\\\\\\\\\\\\\_files\\\\\\\\\\\\\\\\utilities\\\\\\\\\\\\\\\\25nplx-keypair.pem"
 
+$keyPath = "....\Terraform_files\utilities\25nplx-keypair.pem"
 # Remove inherited permissions and grant read-only access to the current user
 icacls $keyPath /inheritance:r
 icacls $keyPath /grant:r "$($env:USERNAME):(R)"
-icacls $keyPath /remove "NT AUTHORITY\\\\\\\\\\\\\\\\Authenticated Users"
+icacls $keyPath /remove "NT AUTHORITY\Authenticated Users"
 icacls $keyPath /remove "Everyone"
+
 ```
 
 ### 11.7 Connect via the Bastion Host
@@ -597,22 +594,20 @@ icacls $keyPath /remove "Everyone"
 **SSH into the bastion host:**
 
 ```bash
-ssh -i ".\\\\\\\\\\\\\\\\Terraform\\\\\\\\\\\\\\\_files\\\\\\\\\\\\\\\\utilities\\\\\\\\\\\\\\\\25nplx-keypair.pem" ubuntu@<bastion\\\\\\\\\\\\\\\_public\\\\\\\\\\\\\\\_ip>
+ssh -i "...\Terraform_files\utilities\25nplx-keypair.pem" ubuntu@<bastion_public_ip>
 ```
 
 **Transfer the private key to the bastion host:**
 
 ```bash
-scp -i ".\\\\\\\\\\\\\\\\Terraform\\\\\\\\\\\\\\\_files\\\\\\\\\\\\\\\\utilities\\\\\\\\\\\\\\\\25nplx-keypair.pem" \\\\\\\\\\\\\\\\
-    ".\\\\\\\\\\\\\\\\Terraform\\\\\\\\\\\\\\\_files\\\\\\\\\\\\\\\\utilities\\\\\\\\\\\\\\\\25nplx-keypair.pem" \\\\\\\\\\\\\\\\
-    ubuntu@<bastion\\\\\\\\\\\\\\\_public\\\\\\\\\\\\\\\_ip>:\\\\\\\\\\\\\\\~/.ssh/25nplx-keypair.pem
+sscp -i "...\Terraform_files\utilities\25nplx-keypair.pem" "....\Terraform_files\utilities\25nplx-keypair.pem" ubuntu@ bastion_public_ip:~/.ssh/25nplx-keypair.pem
 ```
 
 **Set correct permissions on the bastion host, then SSH into the private EC2 instance:**
 
 ```bash
-chmod 400 \\\\\\\\\\\\\\\~/.ssh/25nplx-keypair.pem
-ssh -i \\\\\\\\\\\\\\\~/.ssh/25nplx-keypair.pem ubuntu@<ec2\\\\\\\\\\\\\\\_private\\\\\\\\\\\\\\\_ip>
+chmod 400 ~/.ssh/25nplx-keypair.pem
+ssh -i ~/.ssh/25nplx-keypair.pem ubuntu@ec2_private_ip
 ```
 
 ### 11.8 Verify the Deployment on the Private EC2 Instance
@@ -655,9 +650,7 @@ docker ps
 In a **new local terminal**, create an SSH tunnel to forward the Open WebUI port:
 
 ```bash
-ssh -i ".\\\\\\\\\\\\\\\\Terraform\\\\\\\\\\\\\\\_files\\\\\\\\\\\\\\\\utilities\\\\\\\\\\\\\\\\25nplx-keypair.pem" \\\\\\\\\\\\\\\\
-    -L 8080:<ec2\\\\\\\\\\\\\\\_private\\\\\\\\\\\\\\\_ip>:8080 \\\\\\\\\\\\\\\\
-    ubuntu@<bastion\\\\\\\\\\\\\\\_public\\\\\\\\\\\\\\\_ip> -N
+ssh -i "...\Terraform_files\utilities\ 25nplx-keypair.pem" -L 8080: ec2_private_ip:8080 ubuntu@bastion_public_ip -N
 ```
 
 Open a browser and navigate to:
@@ -675,14 +668,14 @@ The Ubuntu Assistant chatbot will be accessible through the Open WebUI interface
 **Step 1 – Destroy Deployment Layer**
 
 ```bash
-cd Terraform\\\_files/deployment
+cd Terraform_files/deployment
 terraform destroy -auto-approve
 ```
 
 **Step 2 – Destroy Foundation Infrastructure**
 
 ```bash
-cd Terraform\\\_files/foundation
+cd Terraform_files/foundation
 terraform destroy -auto-approve
 ```
 
