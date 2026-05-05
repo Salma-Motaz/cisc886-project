@@ -1,0 +1,18 @@
+Terraform_files/
+├── foundation/
+│   ├── main.tf    ← VPC, subnets, IGW, NAT, S3 endpoint
+│   └── iam.tf     ← IAM roles for EMR + EC2
+│
+├── emr/
+│   ├── emr.tf     ← EMR cluster 
+│
+├── deployment/
+│   └── deployment.tf ← Bastion + LLM EC2
+│
+├── utilities/
+│   ├── 25nplx-keypair    
+│   └── 25nplx-keypair.pub 
+│
+└── preprocessing
+    ├── bootstrap.sh    
+    └── ubuntu_preprocessing.py                                                                                                                
