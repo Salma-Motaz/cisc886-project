@@ -4,10 +4,10 @@
 
 ## Table of Contents
 
-1. [Project Overview](#project-Overview)
-2. [Repository Structure](#Repository-Structure)
+1. [Project Overview](#project-overview)
+2. [Repository Structure](#repository-structure)
 3. [Prerequisites](#prerequisites)
-4. [System Architecture](#System-Architecture)
+4. [System Architecture](#system-architecture)
 5. [Phase 1 – Infrastructure Setup (Terraform + AWS CLI)](#5-phase-1--infrastructure-setup-terraform--aws-cli)
 6. [Phase 2 – Data Acquisition and Preprocessing (EMR + PySpark)](#6-phase-2--data-acquisition-and-preprocessing-emr--pyspark)
 7. [Phase 3 – Model Fine-Tuning (QLoRA + Unsloth)](#7-phase-3--model-fine-tuning-qlora--unsloth)
