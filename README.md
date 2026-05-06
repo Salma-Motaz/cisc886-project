@@ -24,6 +24,7 @@ UbuntuAssist is a domain-specific conversational assistant fine-tuned on the Ubu
 
 \---
 
+\---
 ## 2\. Repository Structure
 
 ```
@@ -66,6 +67,7 @@ repo/
 └── README.md
 
 ```
+\---
 
 \---
 
@@ -96,6 +98,7 @@ repo/
 
 \---
 
+\---
 ## 4\. System Architecture
 
 The deployed system is organised into six principal components forming a secure, sequentially ordered pipeline.
@@ -144,6 +147,7 @@ Internet
 |Model Serving|Ollama, GGUF Q4\_K\_M|Private EC2 (t3.2xlarge)|
 |Web Interface|OpenWebUI (Docker)|Private EC2 (t3.2xlarge)|
 |Access \& Security|Bastion host, SSH tunnelling, security groups|Public subnet|
+\---
 
 \---
 
