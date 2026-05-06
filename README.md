@@ -54,8 +54,15 @@ repo/
 │   └── convert_to_parquet.py
 │ 
 ├── output/
-│       └── figures/  
-│  
+│       └── figures/
+│           ├── fig1_token_distribution.png
+│           ├── fig2_turns_per_dialogue.png
+│           ├── fig3_split_counts.png
+│           └── fig4_time_gap.png
+│
+├── Project_Replication_Guideline/
+│       └── Group_12_CISC886_Project_Replication_Guide.pdf  
+│        
 └── README.md
 
 ```
