@@ -18,13 +18,13 @@
 
 \---
 
-## 1\.Project Overview
+## 1\. Project Overview
 
 UbuntuAssist is a domain-specific conversational assistant fine-tuned on the Ubuntu Dialogue Corpus for the purpose of resolving technical support queries pertaining to the Ubuntu operating system. The system integrates a cloud-native, end-to-end machine learning pipeline deployed on Amazon Web Services (AWS), encompassing distributed data preprocessing via Apache Spark on EMR, supervised fine-tuning of a Llama 3B base model on Lightning AI, quantised model serving via Ollama on a private EC2 instance, and a browser-accessible chat interface delivered through OpenWebUI. All infrastructure is provisioned as code using Terraform, ensuring full reproducibility and version control.
 
 \---
 
-## 2\.Repository Structure
+## 2\. Repository Structure
 
 ```
 repo/
