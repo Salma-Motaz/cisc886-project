@@ -52,17 +52,9 @@ repo/
 │   ├── notebook1_data_prep.ipynb          # Lightning AI fine-tuning notebook (splitting the data)
 │   ├── notebook2_training_testing.ipynb   # Lightning AI fine-tuning notebook (Llama 3B, LoRA, GGUF export)
 │   └── convert_to_parquet.py
-│
-├── dataset/
-│   └── convert_to_parquet.py
 │ 
 ├── output/
-│   │    └── figures/
-│   │
-│   └── processed/
-│        ├── train  
-│        ├── teat    
-│        └── val
+│       └── figures/  
 │  
 └── README.md
 
