@@ -1,10 +1,10 @@
 # Ubuntu Assistant: Fine-Tuned Large Language Model for Technical Issue Resolution
 
-\---
+
 
 ## Table of Contents
 
-1. [Project Overview](#project-overview)
+1. [Project Overview](#1-project-overview)
 2. [Repository Structure](#2-repository-structure)
 3. [Prerequisites](#prerequisites)
 4. [System Architecture](#4-system-architecture)
@@ -14,17 +14,23 @@
 8. [Phase 4 – Model Deployment (EC2 + Ollama + Open WebUI)](#8-phase-4--model-deployment-ec2--ollama--open-webui)
 9. [Phase 5 – Infrastructure Teardown](#9-phase-5--infrastructure-teardown)
 10. [AWS Cost Summary](#10-aws-cost-summary)
-11. [Model Deployment Steps](#11-Model-Deployment-Steps)
+11. [Model Deployment Steps](#11-model-deployment-steps)
+12. [Team Contributions](#12-team-contributions)
 
-\---
+
 
 ## 1\. Project Overview
 
 UbuntuAssist is a domain-specific conversational assistant fine-tuned on the Ubuntu Dialogue Corpus for the purpose of resolving technical support queries pertaining to the Ubuntu operating system. The system integrates a cloud-native, end-to-end machine learning pipeline deployed on Amazon Web Services (AWS), encompassing distributed data preprocessing via Apache Spark on EMR, supervised fine-tuning of a Llama 3B base model on Lightning AI, quantised model serving via Ollama on a private EC2 instance, and a browser-accessible chat interface delivered through OpenWebUI. All infrastructure is provisioned as code using Terraform, ensuring full reproducibility and version control.
 
-\---
+## 🤗 Hugging Face Model
 
-\---
+https://huggingface.co/Rodina222/ubuntu-dialogue-llama3b-gguf
+
+The fine-tuned GGUF model is publicly available for download and deployment with Ollama.
+
+---
+
 ## 2\. Repository Structure
 
 ```
@@ -67,9 +73,6 @@ repo/
 └── README.md
 
 ```
-\---
-
-\---
 
 ## 3\. Prerequisites
 
@@ -96,9 +99,7 @@ repo/
 * Acceptance of the **Meta Llama 3.2 licence** at: [huggingface.co/meta-llama/Llama-3.2-3B-Instruct](https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct).
 * Access to the **Ubuntu Dialogue Corpus** dataset: [https://dataset.cs.mcgill.ca/ubuntu-corpus-1.0/](https://dataset.cs.mcgill.ca/ubuntu-corpus-1.0/).
 
-\---
 
-\---
 ## 4\. System Architecture
 
 The deployed system is organised into six principal components forming a secure, sequentially ordered pipeline.
@@ -147,9 +148,7 @@ Internet
 |Model Serving|Ollama, GGUF Q4\_K\_M|Private EC2 (t3.2xlarge)|
 |Web Interface|OpenWebUI (Docker)|Private EC2 (t3.2xlarge)|
 |Access \& Security|Bastion host, SSH tunnelling, security groups|Public subnet|
-\---
 
-\---
 
 ## 5\. Phase 1 – Infrastructure Setup (Terraform + AWS CLI)
 
@@ -300,8 +299,6 @@ After the EMR job concludes, remove the EMR security group resources:
 terraform destroy -auto-approve
 ```
 
-\---
-
 ## 7\. Phase 3 – Model Fine-Tuning (QLoRA + Unsloth)
 
 Fine-tuning is performed in two sequential Jupyter notebooks on **Lightning AI** (or any GPU-enabled environment with a T4 GPU or equivalent).
@@ -318,14 +315,11 @@ This notebook processes the raw Ubuntu dialogue corpus (provided as Parquet file
 
 These outputs are used by **Notebook 2 (Fine‑Tuning + HuggingFace Push)**.
 
----
 
 ## Prerequisites
 - Python 3.10 or higher
 - Any machine with at least 8 GB RAM (16 GB recommended for full dataset)
 - The raw dataset: a ZIP archive containing **three folders** (`train/`, `validation/`, `test/`) – each folder contains multiple Parquet part files (e.g., `part-00000-….snappy.parquet`)
-
----
 
 ## Step 1: Unzip and Prepare the Parquet Files
 
@@ -360,7 +354,6 @@ test_df.to_parquet("test.parquet")
 ```
 After this step, you will have three files: `train.parquet`, `validation.parquet`, `test.parquet`.
 
----
 
 ## Step 2: Set Up the Python Environment
 
@@ -369,8 +362,6 @@ Run the first cell of the notebook, or manually install:
 ```bash
 pip install fastparquet pandas numpy matplotlib
 ```
-
----
 
 ## Step 3: Run the Notebook
 
@@ -392,7 +383,6 @@ Execute the cells in order. Each cell is clearly labelled.
 - `MAX_TRAIN = 30000`, `MAX_VALID = 3000`, `MAX_TEST = 500` – number of dialogues to randomly sample from the filtered set.
 - `MAX_TURNS = 5` – keep only the last `MAX_TURNS` of each dialogue (the resolution part is most valuable).
 
----
 
 ## Step 4: Output Files
 
@@ -407,7 +397,6 @@ After successful execution, you will find:
 
 These CSV files are **directly consumable** by **Notebook 2** – no further preprocessing required.
 
----
 
 ## Next Steps
 
@@ -592,8 +581,6 @@ Fine-tuned model (step 800):
 - The LoRA adapter is only 115 MB, making it easy to share and deploy
 - GGUF export is optional but recommended for Ollama deployment on EC2
 
-\---
-
 ## 8\. Phase 4 – Model Deployment (EC2 + Ollama + Open WebUI)
 
 ### 8.1 Provision the Deployment Infrastructure
@@ -702,8 +689,6 @@ http://localhost:8080/
 
 The Ubuntu Assistant chatbot will be accessible through the Open WebUI interface, with the model `25nplx-ubuntu-assistant-llama3b-chatbot:latest` available for selection.
 
-\---
-
 ## 9\. Phase 5 – Infrastructure Teardown
 
 Perform teardown in the following order to avoid dependency conflicts.
@@ -734,8 +719,6 @@ terraform destroy -auto-approve
 
 Confirm final output: `Destroy complete! Resources: 19 destroyed.`
 
-\---
-
 ## 10\. AWS Cost Summary
 
 The following table summarises the approximate AWS expenditure incurred during a single end-to-end execution of this project.
@@ -751,8 +734,6 @@ The following table summarises the approximate AWS expenditure incurred during a
 |**Total**|||**\~$0.88**|
 
 > All costs are estimates based on us-east-1 on-demand pricing as of April 2026. Actual costs may vary depending on usage duration and data transfer volumes.
-
-\---
 
 ## 11\. Model Deployment Steps
 
@@ -895,7 +876,6 @@ http://localhost:8080/
 
 The Ubuntu Assistant chatbot will be accessible through the Open WebUI interface, with the model `25nplx-ubuntu-assistant-llama3b-chatbot:latest` available for selection.
 
-\---
 
 ### 11.10 Infrastructure Teardown
 
@@ -919,3 +899,36 @@ Final output:
 Destroy complete! Resources: 19 destroyed.
 ```
 
+## 12\. Team Contributions
+
+### [Farida Gaber](https://github.com/Farida-gaber44) — Dataset Preparation
+
+Responsible for the complete data preparation pipeline, including:
+
+- Preparing and preprocessing the Ubuntu Dialogue Corpus.
+- Cleaning and filtering dialogue data.
+- Creating the training, validation, and test datasets.
+- Performing data quality assessment and dataset organization.
+
+
+### [Rodina Khallaf](https://github.com/Rodina222) — Model Development
+
+Responsible for the complete machine learning pipeline, including:
+
+- Fine-tuning the Llama 3.2 3B model using QLoRA and Unsloth.
+- Training and testing the model.
+- Configuring hyperparameters and evaluating model performance.
+- Exporting the trained model in GGUF format.
+- Publishing the model to Hugging Face Hub.
+- Deploying the model on Hugging Face for inference and demonstration.
+
+
+### [Salma Moataz](https://github.com/Salma-Motaz) — AWS Deployment
+
+Responsible for the cloud infrastructure and deployment, including:
+
+- Provisioning AWS infrastructure using Terraform.
+- Configuring networking, security groups, and IAM roles.
+- Deploying the model serving infrastructure on Amazon EC2.
+- Setting up Ollama and Open WebUI for model inference.
+- Managing the end-to-end AWS deployment pipeline.
